@@ -1,55 +1,63 @@
+import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 
 const ChatInterface = () => {
   const [leftMessages, setLeftMessages] = useState([]);
   const [rightMessages, setRightMessages] = useState([]);
-  const [apiMessages, setApiMessages] = useState([]);
   const [leftInputMessage, setLeftInputMessage] = useState("");
   const [rightInputMessage, setRightInputMessage] = useState("");
-  const [apiInputMessage, setApiInputMessage] = useState("");
   const leftMessagesEndRef = useRef(null);
   const rightMessagesEndRef = useRef(null);
-  const apiMessagesEndRef = useRef(null);
 
-  const sendLeftMessage = () => {
-    if (leftInputMessage.trim() === "") return;
+  const API_URL = "http://localhost:3000/send-message";
 
-    const newMessage = {
-      text: leftInputMessage,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    // Message sent from left appears red on left side, blue on right side
-    setLeftMessages([...leftMessages, { ...newMessage, isSent: true }]);
-    setRightMessages([...rightMessages, { ...newMessage, isSent: false }]);
-    setLeftInputMessage("");
-  };
-
-  const sendRightMessage = () => {
-    if (rightInputMessage.trim() === "") return;
+  const sendMessage = async (
+    sender,
+    message,
+    setInput,
+    setMessages,
+    updateOpposite
+  ) => {
+    if (message.trim() === "") return;
 
     const newMessage = {
-      text: rightInputMessage,
+      text: message,
       timestamp: new Date().toLocaleTimeString(),
+      sender,
     };
 
-    // Message sent from right appears red on right side, blue on left side
-    setRightMessages([...rightMessages, { ...newMessage, isSent: true }]);
-    setLeftMessages([...leftMessages, { ...newMessage, isSent: false }]);
-    setRightInputMessage("");
-  };
+    // Update sender's messages
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { ...newMessage, isSent: true },
+    ]);
 
-  const sendApiMessage = () => {
-    if (apiInputMessage.trim() === "") return;
+    // Reset input
+    setInput("");
 
-    const newMessage = {
-      text: apiInputMessage,
-      timestamp: new Date().toLocaleTimeString(),
-    };
+    try {
+      const requestBody = {
+        sender,
+        recipient: sender === "user1" ? "user2" : "user1", // Assuming recipient is the opposite user
+        message,
+        category: "problem-solving", // Adjust as needed
+      };
 
-    // API messages appear green
-    setApiMessages([...apiMessages, { ...newMessage, isSent: true }]);
-    setApiInputMessage("");
+      const response = await axios.post(API_URL, requestBody);
+      const { phrasedMessage } = response.data;
+
+      // Update the opposite side with the phrased message
+      updateOpposite((prevMessages) => [
+        ...prevMessages,
+        {
+          text: phrasedMessage,
+          timestamp: new Date().toLocaleTimeString(),
+          isSent: false,
+        },
+      ]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   const scrollToBottom = (ref) => {
@@ -64,12 +72,8 @@ const ChatInterface = () => {
     scrollToBottom(rightMessagesEndRef);
   }, [rightMessages]);
 
-  useEffect(() => {
-    scrollToBottom(apiMessagesEndRef);
-  }, [apiMessages]);
-
   return (
-    <div className="flex  bg-gray-100">
+    <div className="flex bg-gray-100">
       {/* Left Chat Container */}
       <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
         <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
@@ -81,7 +85,7 @@ const ChatInterface = () => {
               <div
                 className={`
                   p-2 rounded-lg max-w-xs break-words 
-                  ${msg.isSent ? "bg-red-500" : "bg-blue-500"} 
+                  ${msg.isSent ? "bg-red-500" : "bg-green-500"} 
                   text-white
                 `}
               >
@@ -102,10 +106,27 @@ const ChatInterface = () => {
             onChange={(e) => setLeftInputMessage(e.target.value)}
             className="flex-grow p-2 border rounded-l-lg"
             placeholder="Type a message"
-            onKeyPress={(e) => e.key === "Enter" && sendLeftMessage()}
+            onKeyPress={(e) =>
+              e.key === "Enter" &&
+              sendMessage(
+                "user1",
+                leftInputMessage,
+                setLeftInputMessage,
+                setLeftMessages,
+                setRightMessages
+              )
+            }
           />
           <button
-            onClick={sendLeftMessage}
+            onClick={() =>
+              sendMessage(
+                "user1",
+                leftInputMessage,
+                setLeftInputMessage,
+                setLeftMessages,
+                setRightMessages
+              )
+            }
             className="bg-green-500 text-white p-2 rounded-r-lg"
           >
             Send
@@ -116,9 +137,7 @@ const ChatInterface = () => {
       {/* API Column */}
       <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
         <h2 className="text-xl font-bold mb-4 text-center">API Column</h2>
-        <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
-          <div ref={apiMessagesEndRef} />
-        </div>
+        <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2"></div>
       </div>
 
       {/* Right Chat Container */}
@@ -132,7 +151,7 @@ const ChatInterface = () => {
               <div
                 className={`
                   p-2 rounded-lg max-w-xs break-words 
-                  ${msg.isSent ? "bg-red-500" : "bg-blue-500"} 
+                  ${msg.isSent ? "bg-red-500" : "bg-green-500"} 
                   text-white
                 `}
               >
@@ -153,10 +172,27 @@ const ChatInterface = () => {
             onChange={(e) => setRightInputMessage(e.target.value)}
             className="flex-grow p-2 border rounded-l-lg"
             placeholder="Type a message"
-            onKeyPress={(e) => e.key === "Enter" && sendRightMessage()}
+            onKeyPress={(e) =>
+              e.key === "Enter" &&
+              sendMessage(
+                "user2",
+                rightInputMessage,
+                setRightInputMessage,
+                setRightMessages,
+                setLeftMessages
+              )
+            }
           />
           <button
-            onClick={sendRightMessage}
+            onClick={() =>
+              sendMessage(
+                "user2",
+                rightInputMessage,
+                setRightInputMessage,
+                setRightMessages,
+                setLeftMessages
+              )
+            }
             className="bg-green-500 text-white p-2 rounded-r-lg"
           >
             Send
