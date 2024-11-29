@@ -22,7 +22,7 @@ const ChatMessage = ({ msg, onEditPrompt }) => {
         {/* Prompt Details Toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="absolute top-0 right-0 bg-white/20 rounded-full w-6 h-6 text-xs"
+          className="absolute top-0 right-0 bg-black/20 rounded-full w-6 h-6 text-xs"
         >
           {expanded ? "-" : "i"}
         </button>
@@ -36,7 +36,7 @@ const ChatMessage = ({ msg, onEditPrompt }) => {
           </div>
           <div className="mb-2">
             <strong>Rephrased Message:</strong>
-            <p>{msg.rephrasedMessage} || </p>
+            <p>{msg.rephrasedMessage || "No rephrased message"}</p>
           </div>
           <div className="mb-2">
             <strong>Prompt Used:</strong>
@@ -129,24 +129,6 @@ const ChatInterface = () => {
     const currentPrompt =
       editablePrompt || getDefaultPrompts()[selectedAlgorithm].prompt;
 
-    const newMessage = {
-      text: message,
-      timestamp: new Date().toLocaleTimeString(),
-      isSent: true,
-      originalPrompt: originalMessage?.originalPrompt || message,
-      usedPrompt: currentPrompt,
-      algorithm: selectedAlgorithm,
-      sender: sender, // Add sender information
-    };
-
-    // Update sender's messages
-    setMessages((prevMessages) => [...prevMessages, { ...newMessage }]);
-
-    // Reset input and edit prompt
-    setInput("");
-    setEditablePrompt("");
-    setCurrentEditMessage(null);
-
     try {
       // Prepare request body
       const requestBody = {
@@ -161,6 +143,25 @@ const ChatInterface = () => {
       // Send message to backend
       const response = await axios.post(API_URL, requestBody);
       const phrasedMessage = response.data.message;
+
+      const newMessage = {
+        text: message,
+        rephrasedMessage: phrasedMessage,
+        timestamp: new Date().toLocaleTimeString(),
+        isSent: true,
+        originalPrompt: originalMessage?.originalPrompt || message,
+        usedPrompt: currentPrompt,
+        algorithm: selectedAlgorithm,
+        sender: sender,
+      };
+
+      // Update sender's messages
+      setMessages((prevMessages) => [...prevMessages, { ...newMessage }]);
+
+      // Reset input and edit prompt
+      setInput("");
+      setEditablePrompt("");
+      setCurrentEditMessage(null);
 
       // Update opposite side with phrased message
       updateOpposite((prevMessages) => [
@@ -178,13 +179,28 @@ const ChatInterface = () => {
       ]);
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // Fallback message in case of error
+      const newMessage = {
+        text: message,
+        rephrasedMessage: "Error generating rephrased message",
+        timestamp: new Date().toLocaleTimeString(),
+        isSent: true,
+        originalPrompt: originalMessage?.originalPrompt || message,
+        usedPrompt: currentPrompt,
+        algorithm: selectedAlgorithm,
+        sender: sender,
+      };
+
+      // Update sender's messages with error message
+      setMessages((prevMessages) => [...prevMessages, { ...newMessage }]);
+      setInput("");
     }
   };
 
   // Render method
   return (
     <div>
-      {" "}
       <DownloadPDF />
       <div className="flex bg-gray-100 h-[80vh]">
         {/* Left Chat Container */}
