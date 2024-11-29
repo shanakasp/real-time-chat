@@ -36,7 +36,7 @@ const ChatMessage = ({ msg, onEditPrompt }) => {
           </div>
           <div className="mb-2">
             <strong>Rephrased Message:</strong>
-            <p>{msg.text}</p>
+            <p>{msg.rephrasedMessage} || </p>
           </div>
           <div className="mb-2">
             <strong>Prompt Used:</strong>
@@ -120,7 +120,8 @@ const ChatInterface = () => {
     message,
     setInput,
     setMessages,
-    updateOpposite
+    updateOpposite,
+    originalMessage = null
   ) => {
     if (message.trim() === "") return;
 
@@ -132,9 +133,10 @@ const ChatInterface = () => {
       text: message,
       timestamp: new Date().toLocaleTimeString(),
       isSent: true,
-      originalPrompt: message,
+      originalPrompt: originalMessage?.originalPrompt || message,
       usedPrompt: currentPrompt,
       algorithm: selectedAlgorithm,
+      sender: sender, // Add sender information
     };
 
     // Update sender's messages
@@ -168,8 +170,10 @@ const ChatInterface = () => {
           timestamp: new Date().toLocaleTimeString(),
           isSent: false,
           originalPrompt: message,
+          rephrasedMessage: phrasedMessage,
           usedPrompt: currentPrompt,
           algorithm: selectedAlgorithm,
+          sender: sender === "user1" ? "user2" : "user1",
         },
       ]);
     } catch (error) {
@@ -275,25 +279,26 @@ const ChatInterface = () => {
                 <button
                   className="bg-green-500 text-white p-2 rounded"
                   onClick={() => {
+                    // Determine the correct sender and message set based on the original message
+                    const isSenderUser1 = currentEditMessage.sender === "user1";
+                    const setInputFunc = isSenderUser1
+                      ? setLeftInputMessage
+                      : setRightInputMessage;
+                    const setMessagesFunc = isSenderUser1
+                      ? setLeftMessages
+                      : setRightMessages;
+                    const updateOppositeFunc = isSenderUser1
+                      ? setRightMessages
+                      : setLeftMessages;
+
                     // Resend message with new prompt
                     sendMessage(
-                      currentEditMessage.isSent
-                        ? currentEditMessage.algorithm === "1"
-                          ? "user1"
-                          : "user2"
-                        : currentEditMessage.algorithm === "1"
-                        ? "user2"
-                        : "user1",
+                      currentEditMessage.sender,
                       currentEditMessage.originalPrompt,
-                      currentEditMessage.algorithm === "1"
-                        ? setLeftInputMessage
-                        : setRightInputMessage,
-                      currentEditMessage.algorithm === "1"
-                        ? setLeftMessages
-                        : setRightMessages,
-                      currentEditMessage.algorithm === "1"
-                        ? setRightMessages
-                        : setLeftMessages
+                      setInputFunc,
+                      setMessagesFunc,
+                      updateOppositeFunc,
+                      currentEditMessage
                     );
                   }}
                 >
