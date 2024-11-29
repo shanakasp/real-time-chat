@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import DownloadPDF from "./DownloadPDF";
 
 const ChatMessage = ({ msg, onEditPrompt }) => {
   const [expanded, setExpanded] = useState(false);
@@ -68,7 +69,7 @@ const ChatInterface = () => {
   const leftMessagesEndRef = useRef(null);
   const rightMessagesEndRef = useRef(null);
 
-  const API_URL = "http://localhost:5000/send-message";
+  const API_URL = "http://localhost:4000/send-message";
 
   // Default prompts for each algorithm
   const getDefaultPrompts = () => ({
@@ -178,195 +179,199 @@ const ChatInterface = () => {
 
   // Render method
   return (
-    <div className="flex bg-gray-100 h-[90vh]">
-      {/* Left Chat Container */}
-      <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
-        <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
-          {leftMessages.map((msg, index) => (
-            <ChatMessage
-              key={index}
-              msg={msg}
-              onEditPrompt={handleEditPrompt}
+    <div>
+      {" "}
+      <DownloadPDF />
+      <div className="flex bg-gray-100 h-[80vh]">
+        {/* Left Chat Container */}
+        <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
+          <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
+            {leftMessages.map((msg, index) => (
+              <ChatMessage
+                key={index}
+                msg={msg}
+                onEditPrompt={handleEditPrompt}
+              />
+            ))}
+            <div ref={leftMessagesEndRef} />
+          </div>
+
+          <div className="flex">
+            <input
+              type="text"
+              value={leftInputMessage}
+              onChange={(e) => setLeftInputMessage(e.target.value)}
+              className="flex-grow p-2 border rounded-l-lg"
+              placeholder="Type a message"
+              onKeyPress={(e) =>
+                e.key === "Enter" &&
+                sendMessage(
+                  "user1",
+                  leftInputMessage,
+                  setLeftInputMessage,
+                  setLeftMessages,
+                  setRightMessages
+                )
+              }
             />
-          ))}
-          <div ref={leftMessagesEndRef} />
-        </div>
-
-        <div className="flex">
-          <input
-            type="text"
-            value={leftInputMessage}
-            onChange={(e) => setLeftInputMessage(e.target.value)}
-            className="flex-grow p-2 border rounded-l-lg"
-            placeholder="Type a message"
-            onKeyPress={(e) =>
-              e.key === "Enter" &&
-              sendMessage(
-                "user1",
-                leftInputMessage,
-                setLeftInputMessage,
-                setLeftMessages,
-                setRightMessages
-              )
-            }
-          />
-          <button
-            onClick={() =>
-              sendMessage(
-                "user1",
-                leftInputMessage,
-                setLeftInputMessage,
-                setLeftMessages,
-                setRightMessages
-              )
-            }
-            className="bg-green-500 text-white p-2 rounded-r-lg"
-          >
-            Send
-          </button>
-        </div>
-      </div>
-
-      {/* API Column */}
-      <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
-        <h2 className="text-xl font-bold mb-4 text-center">
-          Prompt Configuration
-        </h2>
-
-        {/* Algorithm Selection */}
-        <div className="mb-4">
-          <label className="block mb-2">Select Algorithm</label>
-          <select
-            value={selectedAlgorithm}
-            onChange={(e) => setSelectedAlgorithm(e.target.value)}
-            className="p-2 border rounded w-full"
-          >
-            <option value="1">Algorithm 1</option>
-            <option value="2">Algorithm 2</option>
-            <option value="3">Algorithm 3</option>
-          </select>
-        </div>
-
-        {/* Prompt Editing Area */}
-        <div className="mb-4">
-          <label className="block mb-2">Edit Prompt</label>
-          <textarea
-            value={editablePrompt}
-            onChange={(e) => setEditablePrompt(e.target.value)}
-            placeholder="Customize prompt (optional)"
-            className="w-full p-2 border rounded h-24"
-          />
-          <div className="mt-2 flex space-x-2">
             <button
-              className="bg-blue-500 text-white p-2 rounded"
-              onClick={() => {
-                const defaultPrompt =
-                  getDefaultPrompts()[selectedAlgorithm].prompt;
-                setEditablePrompt(defaultPrompt);
-              }}
+              onClick={() =>
+                sendMessage(
+                  "user1",
+                  leftInputMessage,
+                  setLeftInputMessage,
+                  setLeftMessages,
+                  setRightMessages
+                )
+              }
+              className="bg-green-500 text-white p-2 rounded-r-lg"
             >
-              Reset Default
+              Send
             </button>
-            {currentEditMessage && (
-              <button
-                className="bg-green-500 text-white p-2 rounded"
-                onClick={() => {
-                  // Resend message with new prompt
-                  sendMessage(
-                    currentEditMessage.isSent
-                      ? currentEditMessage.algorithm === "1"
-                        ? "user1"
-                        : "user2"
-                      : currentEditMessage.algorithm === "1"
-                      ? "user2"
-                      : "user1",
-                    currentEditMessage.originalPrompt,
-                    currentEditMessage.algorithm === "1"
-                      ? setLeftInputMessage
-                      : setRightInputMessage,
-                    currentEditMessage.algorithm === "1"
-                      ? setLeftMessages
-                      : setRightMessages,
-                    currentEditMessage.algorithm === "1"
-                      ? setRightMessages
-                      : setLeftMessages
-                  );
-                }}
-              >
-                Resend with New Prompt
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Algorithm 3 Sub-types */}
-        {selectedAlgorithm === "3" && (
-          <div>
-            <h3 className="font-bold mb-2">Sub-types for Algorithm 3</h3>
-            <div className="flex flex-wrap gap-2">
-              {getDefaultPrompts()["3"].subTypes.map((subType) => (
+        {/* API Column */}
+        <div className="w-1/3 p-4 border-r border-gray-300 flex flex-col">
+          <h2 className="text-xl font-bold mb-4 text-center">
+            Prompt Configuration
+          </h2>
+
+          {/* Algorithm Selection */}
+          <div className="mb-4">
+            <label className="block mb-2">Select Algorithm</label>
+            <select
+              value={selectedAlgorithm}
+              onChange={(e) => setSelectedAlgorithm(e.target.value)}
+              className="p-2 border rounded w-full"
+            >
+              <option value="1">Algorithm 1</option>
+              <option value="2">Algorithm 2</option>
+              <option value="3">Algorithm 3</option>
+            </select>
+          </div>
+
+          {/* Prompt Editing Area */}
+          <div className="mb-4">
+            <label className="block mb-2">Edit Prompt</label>
+            <textarea
+              value={editablePrompt}
+              onChange={(e) => setEditablePrompt(e.target.value)}
+              placeholder="Customize prompt (optional)"
+              className="w-full p-2 border rounded h-24"
+            />
+            <div className="mt-2 flex space-x-2">
+              <button
+                className="bg-blue-500 text-white p-2 rounded"
+                onClick={() => {
+                  const defaultPrompt =
+                    getDefaultPrompts()[selectedAlgorithm].prompt;
+                  setEditablePrompt(defaultPrompt);
+                }}
+              >
+                Reset Default
+              </button>
+              {currentEditMessage && (
                 <button
-                  key={subType}
-                  className="bg-gray-200 p-1 rounded"
+                  className="bg-green-500 text-white p-2 rounded"
                   onClick={() => {
-                    setEditablePrompt(
-                      `Rephrase the message to be more ${subType}`
+                    // Resend message with new prompt
+                    sendMessage(
+                      currentEditMessage.isSent
+                        ? currentEditMessage.algorithm === "1"
+                          ? "user1"
+                          : "user2"
+                        : currentEditMessage.algorithm === "1"
+                        ? "user2"
+                        : "user1",
+                      currentEditMessage.originalPrompt,
+                      currentEditMessage.algorithm === "1"
+                        ? setLeftInputMessage
+                        : setRightInputMessage,
+                      currentEditMessage.algorithm === "1"
+                        ? setLeftMessages
+                        : setRightMessages,
+                      currentEditMessage.algorithm === "1"
+                        ? setRightMessages
+                        : setLeftMessages
                     );
                   }}
                 >
-                  {subType}
+                  Resend with New Prompt
                 </button>
-              ))}
+              )}
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Right Chat Container */}
-      <div className="w-1/3 p-4 flex flex-col">
-        <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
-          {rightMessages.map((msg, index) => (
-            <ChatMessage
-              key={index}
-              msg={msg}
-              onEditPrompt={handleEditPrompt}
-            />
-          ))}
-          <div ref={rightMessagesEndRef} />
+          {/* Algorithm 3 Sub-types */}
+          {selectedAlgorithm === "3" && (
+            <div>
+              <h3 className="font-bold mb-2">Sub-types for Algorithm 3</h3>
+              <div className="flex flex-wrap gap-2">
+                {getDefaultPrompts()["3"].subTypes.map((subType) => (
+                  <button
+                    key={subType}
+                    className="bg-gray-200 p-1 rounded"
+                    onClick={() => {
+                      setEditablePrompt(
+                        `Rephrase the message to be more ${subType}`
+                      );
+                    }}
+                  >
+                    {subType}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex">
-          <input
-            type="text"
-            value={rightInputMessage}
-            onChange={(e) => setRightInputMessage(e.target.value)}
-            className="flex-grow p-2 border rounded-l-lg"
-            placeholder="Type a message"
-            onKeyPress={(e) =>
-              e.key === "Enter" &&
-              sendMessage(
-                "user2",
-                rightInputMessage,
-                setRightInputMessage,
-                setRightMessages,
-                setLeftMessages
-              )
-            }
-          />
-          <button
-            onClick={() =>
-              sendMessage(
-                "user2",
-                rightInputMessage,
-                setRightInputMessage,
-                setRightMessages,
-                setLeftMessages
-              )
-            }
-            className="bg-green-500 text-white p-2 rounded-r-lg"
-          >
-            Send
-          </button>
+        {/* Right Chat Container */}
+        <div className="w-1/3 p-4 flex flex-col">
+          <div className="flex-grow overflow-y-auto mb-4 space-y-2 pr-2">
+            {rightMessages.map((msg, index) => (
+              <ChatMessage
+                key={index}
+                msg={msg}
+                onEditPrompt={handleEditPrompt}
+              />
+            ))}
+            <div ref={rightMessagesEndRef} />
+          </div>
+
+          <div className="flex">
+            <input
+              type="text"
+              value={rightInputMessage}
+              onChange={(e) => setRightInputMessage(e.target.value)}
+              className="flex-grow p-2 border rounded-l-lg"
+              placeholder="Type a message"
+              onKeyPress={(e) =>
+                e.key === "Enter" &&
+                sendMessage(
+                  "user2",
+                  rightInputMessage,
+                  setRightInputMessage,
+                  setRightMessages,
+                  setLeftMessages
+                )
+              }
+            />
+            <button
+              onClick={() =>
+                sendMessage(
+                  "user2",
+                  rightInputMessage,
+                  setRightInputMessage,
+                  setRightMessages,
+                  setLeftMessages
+                )
+              }
+              className="bg-green-500 text-white p-2 rounded-r-lg"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
