@@ -16,7 +16,9 @@ const RestartSession = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.post("http://localhost:4000/restart");
+          await axios.post(
+            "https://backend-chat-rephrase.onrender.com/restart"
+          );
           Swal.fire(
             "Restarted!",
             "Your session has been restarted.",

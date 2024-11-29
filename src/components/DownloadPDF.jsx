@@ -53,7 +53,7 @@ const DownloadPDF = () => {
       <button
         onClick={() =>
           generatePDF(
-            "http://localhost:4000/conversation?user1=user1&user2=user2",
+            "https://backend-chat-rephrase.onrender.com/conversation?user1=user1&user2=user2",
             "User1_Prompts.pdf"
           )
         }
@@ -74,7 +74,7 @@ const DownloadPDF = () => {
       <button
         onClick={() =>
           generatePDF(
-            "http://localhost:4000/conversation?user1=user2&user2=user1",
+            "https://backend-chat-rephrase.onrender.com/conversation?user1=user2&user2=user1",
             "User2_Prompts.pdf"
           )
         }

@@ -69,7 +69,7 @@ const ChatInterface = () => {
   const leftMessagesEndRef = useRef(null);
   const rightMessagesEndRef = useRef(null);
 
-  const API_URL = "http://localhost:4000/send-message";
+  const API_URL = "https://backend-chat-rephrase.onrender.com/send-message";
 
   // Default prompts for each algorithm
   const getDefaultPrompts = () => ({
