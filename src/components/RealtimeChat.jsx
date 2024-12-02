@@ -158,10 +158,8 @@ const ChatInterface = () => {
       // Update sender's messages
       setMessages((prevMessages) => [...prevMessages, { ...newMessage }]);
 
-      // Reset input and edit prompt
+      // Reset only input, keep editablePrompt and currentEditMessage
       setInput("");
-      setEditablePrompt("");
-      setCurrentEditMessage(null);
 
       // Update opposite side with phrased message
       updateOpposite((prevMessages) => [
@@ -262,7 +260,11 @@ const ChatInterface = () => {
             <label className="block mb-2">Select Algorithm</label>
             <select
               value={selectedAlgorithm}
-              onChange={(e) => setSelectedAlgorithm(e.target.value)}
+              onChange={(e) => {
+                setSelectedAlgorithm(e.target.value);
+                // Reset prompt to default when algorithm changes
+                setEditablePrompt(getDefaultPrompts()[e.target.value].prompt);
+              }}
               className="p-2 border rounded w-full"
             >
               <option value="1">Algorithm 1</option>
